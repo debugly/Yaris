@@ -1,0 +1,109 @@
+---
+layout: default
+---
+
+<div class="post">
+
+  <div class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+    <div class="post-date">
+      <span class="post-meta">{{ page.date | date_to_string }}</span>
+      {% for category in page.categories %}
+      	<span> · </span>
+      	<a href="/categories/{{ category | url_encode }}/index.html">{{ category }}</a>
+    	{% endfor %}
+    	<span> · </span>
+    	<span class="post-meta"> {{ content | size }} 字</span>
+    </div>
+  </div>
+
+  <div class="post-content">
+    {{ content }}
+  </div>
+
+  <div class="modify">
+  	最后一次修改时间 : {{ page.path | file_date | date: "%y年%m月%d日" }}.
+  </div>
+
+</div>
+
+<div class="nav-meta">
+	{% if page.previous %}
+	<a class="previous" href="{{ page.previous.url }}"> << {{ page.previous.title}} </a>
+	{% endif %}
+
+	{% if page.next %}
+	<a class="next" href="{{ page.next.url }}"> {{ page.next.title}} >> </a>
+	{% endif %}
+</div>
+
+<div class="post-zan">
+			<a href="alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=https%3A%2F%2Fqr.alipay.com%2FFKX0851484LFW1ZXQOUM37%3F_s%3Dweb-other">👍 文章对我有帮助，打赏1元 👍</a>
+</div>
+
+<!-- <div class="related">
+    {% for pc in page.categories %}
+    <h2>《<a class="meta-category" href="/categories/{{ pc | url_encode }}/index.html">{{ pc }}</a>》Related Posts</h2>
+    <ul class="related-posts">
+      {% for post in site.categories[pc] limit:5 %}
+        {% unless post.title == page.title %}
+          <li>
+            <h3>
+              <a href="{{ site.baseurl }}{{ post.url }}">
+                {{ post.title }}
+                <small>{{ post.date | date_to_string }}</small>
+              </a>
+            </h3>
+          </li>
+        {% endunless %}
+      {% endfor %}
+      </ul>
+    {% endfor %}
+</div> -->
+
+<div class="related">
+  <h2> 相关文章 </h2>
+  <ol class="related-posts">
+    {% for post in site.related_posts limit:8 %}
+      {% unless post.title == page.title %}
+        <li>
+          <h3>
+            <a href="{{ site.baseurl }}{{ post.url }}">
+              {{ post.title }}
+              <small>{{ post.date | date_to_string }}</small>
+            </a>
+          </h3>
+        </li>
+      {% endunless %}
+    {% endfor %}
+  </ol>
+</div>
+
+<!-- 评论 -->
+<div class="comment">
+  <h2> 评论 </h2>
+	<div class="comment-body">
+		{% include comment.html %}
+	</div>
+</div>
+
+<script>
+function is_mobile_browser() {
+    var sUserAgent = navigator.userAgent.toLowerCase();
+    var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";
+    var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";
+    var bIsMidp = sUserAgent.match(/midp/i) == "midp";
+    var bIsUc7 = sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4";
+    var bIsUc = sUserAgent.match(/ucweb/i) == "ucweb";
+    var bIsAndroid = sUserAgent.match(/android/i) == "android";
+    var bIsCE = sUserAgent.match(/windows ce/i) == "windows ce";
+    var bIsWM = sUserAgent.match(/windows mobile/i) == "windows mobile";
+
+    if (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM) {
+        var e = document.getElementById('post-zan');
+        e.style.display="block";
+    }
+}
+
+is_mobile_browser();
+</script>

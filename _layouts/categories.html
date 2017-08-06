@@ -1,0 +1,24 @@
+---
+layout: default
+---
+
+{% for category in site.categories %}
+ <div class="categories">
+	 <div class="categories-header">
+		 <a href="/categories/{{ category | first | url_encode }}/index.html">{{ category | first }}</a>
+		 <span>[ {{ category | last | size }} ]</span>
+	 </div>
+	 <ol class="categories-posts">
+		{% for post in category.last %}
+		<li class="categories-post">
+			<a href="{{ post.url }}#2">{{ post.title }}</a>
+			<span>{{ post.date | date:"%y年%m月%d日"}}</span>
+		</li>
+		{% endfor %}
+	</ol>
+</div>
+{% endfor %}
+
+<p class="message">
+	共计 {{ site.categories | size }} 个类别，{{ site.posts | size }} 篇文章。
+</p>

@@ -1,0 +1,36 @@
+---
+layout: default
+---
+
+<div class="category-header">
+  <h1> 《 {{site.categories[page.category] | size}} 篇 {{ page.category }} 相关文章 》</h1>
+</div>
+
+{% assign hasNew = false %}
+{% for post in site.categories[page.category] %}
+  {% capture this_year %}{{ post.date | date: "%Y" }}{% endcapture %}
+
+  {% unless year == this_year %}
+    {% assign year = this_year %}
+    {% if hasNew%}
+      </ol>
+      </div>
+      {% assign hasNew = false %}
+    {% endif %}
+    {% assign hasNew = true %}
+      <div class="categories">
+        <div class="categories-header">{{ year }}
+        </div>
+        <ol class="categories-posts">
+  {% endunless %}
+     <li class="categories-post">
+       {% capture category %}{{ post.categories | size }}{% endcapture %}
+       <a href="{{ root_url }}{{ post.url }}">{% if site.titlecase %}{{ post.title | titlecase }}{% else %}{{ post.title }}{% endif %}</a>
+       <span class="date">{{ post.date | date:"%y-%m-%d %H:%M:%S"}}</span>
+     </li>
+  {% endfor %}
+
+  {% if hasNew%}
+    </ol>
+    </div>
+  {% endif %}

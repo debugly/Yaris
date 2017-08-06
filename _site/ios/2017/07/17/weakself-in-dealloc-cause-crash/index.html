@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      在 dealloc 里使用 weak self 引起崩溃？ &middot; Matt Reach
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <img src="/assets/images/icon_about.png"/>
+    <p><p>滚滚东逝水，淘尽英雄泪。</p><p>青山依旧在，几度夕阳红。 </p><p>古今多少事，都付笑谈中。</p></p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="/">首页</a>
+    <a class="sidebar-nav-item" href="/categories/">分类</a>
+    <a class="sidebar-nav-item" href="/qianfansdk">轮子</a>
+    <a class="sidebar-nav-item" href="/about/">关于</a>
+  </nav>
+
+</div>
+
+
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="/" title="Home">Matt Reach</a>
+            <small>an iOS Developer</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+        <div class="post">
+
+  <div class="post-header">
+    <h1 class="post-title">在 dealloc 里使用 weak self 引起崩溃？</h1>
+    <div class="post-date">
+      <span class="post-meta">17 Jul 2017</span>
+      
+      	<span> · </span>
+      	<a href="/categories/iOS/index.html">iOS</a>
+    	
+    	<span> · </span>
+    	<span class="post-meta"> 10836 字</span>
+    </div>
+  </div>
+
+  <div class="post-content">
+    <blockquote>
+  <p>我们都知道 weak 修饰的变量，在对象释放后，会自动置为 nil，这一机制减少了大量的野指针崩溃；可是如果你在对象的 dealloc 里使用 weak 修饰 self 会如何呢 ？答案是崩溃 ~_~ 最近我们 SDK 在集成到某个 App 之后，就遇到了这样的问题，一起看下吧！</p>
+</blockquote>
+
+<p>先看下解析后的崩溃日志吧：</p>
+
+<div class="language-objc highlighter-rouge"><pre class="highlight"><code><span class="n">Thread</span> <span class="mi">0</span> <span class="n">Crashed</span><span class="o">:</span>
+<span class="mi">0</span>   <span class="n">libsystem_kernel</span><span class="p">.</span><span class="n">dylib</span>        	<span class="mh">0x0000000182c1987c</span> <span class="n">__terminate_with_payload</span> <span class="o">+</span> <span class="mi">8</span>
+<span class="mi">1</span>   <span class="n">libsystem_kernel</span><span class="p">.</span><span class="n">dylib</span>        	<span class="mh">0x0000000182c144f0</span> <span class="n">abort_with_payload</span> <span class="o">+</span> <span class="mi">0</span>
+<span class="mi">2</span>   <span class="n">libsystem_kernel</span><span class="p">.</span><span class="n">dylib</span>        	<span class="mh">0x0000000182c1446c</span> <span class="n">abort_with_payload_wrapper_internal</span> <span class="o">+</span> <span class="mi">0</span>
+<span class="mi">3</span>   <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018267fea4</span> <span class="n">_objc_fatalv</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">,</span> <span class="kt">char</span> <span class="k">const</span><span class="o">*</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="o">+</span> <span class="mi">112</span>
+<span class="mi">4</span>   <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018267fdfc</span> <span class="n">__objc_error</span> <span class="o">+</span> <span class="mi">0</span>
+<span class="mi">5</span>   <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x0000000182693edc</span> <span class="n">weak_entry_insert</span><span class="p">(</span><span class="n">weak_table_t</span><span class="o">*</span><span class="p">,</span> <span class="n">weak_entry_t</span><span class="o">*</span><span class="p">)</span> <span class="o">+</span> <span class="mi">0</span>
+<span class="mi">6</span>   <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018269c3ac</span> <span class="n">objc_storeWeak</span> <span class="o">+</span> <span class="mi">332</span>
+<span class="mi">7</span>   <span class="n">SOHUVideo</span>                     	<span class="mh">0x00000001004b5ba0</span> <span class="o">-</span><span class="p">[</span><span class="n">SharePopView</span> <span class="nf">setDelegate</span><span class="p">:]</span> <span class="p">(</span><span class="n">SharePopView</span><span class="p">.</span><span class="n">h</span><span class="o">:</span><span class="mi">31</span><span class="p">)</span>
+<span class="mi">8</span>   <span class="n">SOHUVideo</span>                     	<span class="mh">0x00000001003ce7c8</span> <span class="o">-</span><span class="p">[</span><span class="n">ShareViewController</span> <span class="nf">shareView</span><span class="p">]</span> <span class="p">(</span><span class="n">ShareViewController</span><span class="p">.</span><span class="n">m</span><span class="o">:</span><span class="mi">70</span><span class="p">)</span>
+<span class="mi">9</span>   <span class="n">SOHUVideo</span>                     	<span class="mh">0x00000001003ce2a0</span> <span class="o">-</span><span class="p">[</span><span class="n">ShareViewController</span> <span class="nf">dealloc</span><span class="p">]</span> <span class="p">(</span><span class="n">ShareViewController</span><span class="p">.</span><span class="n">m</span><span class="o">:</span><span class="mi">43</span><span class="p">)</span>
+<span class="mi">10</span>  <span class="n">UIKit</span>                         	<span class="mh">0x000000018a0a5960</span> <span class="o">-</span><span class="p">[</span><span class="n">UIPresentationController</span> <span class="p">.</span><span class="nf">cxx_destruct</span><span class="p">]</span> <span class="o">+</span> <span class="mi">312</span>
+<span class="mi">11</span>  <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018267ef00</span> <span class="n">object_cxxDestructFromClass</span><span class="p">(</span><span class="n">objc_object</span><span class="o">*</span><span class="p">,</span> <span class="n">objc_class</span><span class="o">*</span><span class="p">)</span> <span class="o">+</span> <span class="mi">148</span>
+<span class="mi">12</span>  <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018268c334</span> <span class="n">objc_destructInstance</span> <span class="o">+</span> <span class="mi">92</span>
+<span class="mi">13</span>  <span class="n">libobjc</span><span class="p">.</span><span class="n">A</span><span class="p">.</span><span class="n">dylib</span>               	<span class="mh">0x000000018268c398</span> <span class="n">object_dispose</span> <span class="o">+</span> <span class="mi">28</span>
+<span class="mi">14</span>  <span class="n">UIKit</span>                         	<span class="mh">0x000000018a0a1348</span> <span class="o">-</span><span class="p">[</span><span class="n">UIPresentationController</span> <span class="nf">dealloc</span><span class="p">]</span> <span class="o">+</span> <span class="mi">64</span>
+</code></pre>
+</div>
+
+<p>如果连着线直接 debug 的话，可能控制台只输出了这样一句话，并且代码定位到使用 weak self 那一行，此时可以使用 <code class="highlighter-rouge">bt</code> 打印堆栈信息，打出来跟上面是一样:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>objc[78013]: Cannot form weak reference to instance (0x7fbc9287e840) of class ShareViewController. It is possible that this object was over-released, or is in the process of deallocation.
+</code></pre>
+</div>
+
+<p>接下来我们一行一行的分析崩溃日志，然后确定问题，这是函数调用栈，因此先走的方法在下面，最上面的是最后走的方法，因此我们倒着来看，从第 9 行看就好了：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>9 : ShareViewController 的 dealloc 走了
+8 : 访问了 ShareViewController 对象的属性 shareView
+7 : 给 shareView 设置了代理对象
+6 : 看库名知道这是走到了 objc 底层了，看方法名知道这个操作应该是要存储一个 weak 修饰的对象
+5 : 将 weak entry 插入到 table 里
+4 : 遇到了错误
+3 : 处理致命错误
+2 : 代码继续往下走，objc 交给了 system 处理
+1 : 系统终结了你的程序
+</code></pre>
+</div>
+
+<p>底层的错误肯定是上层调用错误引起的，因此我们只看 App 层最后一个方法调用，那就是 <code class="highlighter-rouge">[SharePopView setDelegate:]</code>，源码是这样写的:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">dealloc</span> <span class="p">{</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">shareView</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">shareView</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="o">-</span> <span class="p">(</span><span class="n">SharePopView</span> <span class="o">*</span><span class="p">)</span><span class="n">shareView</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">_shareView</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">CGFloat</span> <span class="n">height</span> <span class="o">=</span> <span class="n">titleHeight</span> <span class="o">+</span> <span class="n">ShareIconViewHeightForSL</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">bottomTitleHeight</span> <span class="o">+</span> <span class="n">cancelButtonHeight</span><span class="p">;</span>
+        <span class="n">_shareView</span> <span class="o">=</span> <span class="p">[[</span><span class="n">SharePopView</span> <span class="nf">alloc</span><span class="p">]</span> <span class="nf">initWithFrame</span><span class="p">:</span><span class="n">CGRectMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">DeviceHeight</span> <span class="o">-</span> <span class="n">height</span><span class="p">,</span> <span class="n">DeviceWidth</span><span class="p">,</span> <span class="n">height</span><span class="p">)];</span>
+        <span class="n">_shareView</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span><span class="c1">///连着线调试时，崩溃后定位到了这一行！！！
+</span>    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">_shareView</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">@interface</span> <span class="nc">SharePopView</span> <span class="p">:</span> <span class="nc">UIView</span>
+
+<span class="c1">////这里使用的是 weak 修饰的
+</span><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="n">id</span><span class="o">&lt;</span><span class="n">SharePopupViewDelegate</span><span class="o">&gt;</span> <span class="n">delegate</span><span class="p">;</span>
+
+<span class="k">@end</span>
+</code></pre>
+</div>
+
+<p>我看到这个代码的第一反应是，<strong>dealloc 不应该使用 self 打点访问懒加载的属性</strong>，我也经常重写 get 方法来懒加载，因此我对于这个很敏感，因为对象正在释放，没有创建相关属性的必要了，这里之所以崩溃，是因为创建对象之后，立马指定了 self 为代理，并且是 weak 的，从崩溃堆栈信息也能看出，设置了weak修饰的代理后，objc 底层对 self 进行了处理，在处理的时候，发现不对劲，然后就 abort 了！！</p>
+
+<p>ps : 不管是使用 weak 修饰的属性，还是使用 __weak 修饰的变量，objc 都会对这个变量处理，也只有这样才能让修饰对象在释放之后，自动置空！</p>
+
+<p>看到源码问题就好解决了，加个判断就行了，不要懒加载去创建，而是判断下，如果创建过就将代理置空，这样就避免了在 dealloc 里使用 weak 修饰 self 对象！</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>- (void)dealloc {
+	if(_shareView){
+	 	_shareView.delegate = nil;
+    	_shareView = nil;
+	}
+}
+</code></pre>
+</div>
+
+<p>问题是解决了，可是还没搞明白底层 objc 的处理流程呢，有兴趣的话接着往下看吧：<a href="/ios/2017/07/17/objc-weak-obj-imp.html">源码分析 weak 对象置空原理</a>.</p>
+
+  </div>
+
+  <div class="modify">
+  	最后一次修改时间 : 17年08月02日.
+  </div>
+
+</div>
+
+<div class="nav-meta">
+	
+	<a class="previous" href="/ios/2015/07/14/jie-jue-nstimeryin-qi-de-nei-cun-xie-lou/"> << 解决 NSTimer 内存泄漏问题 </a>
+	
+
+	
+	<a class="next" href="/ios/2017/07/18/objc-weak-obj-imp/"> 源码分析 weak 对象自动置空原理 >> </a>
+	
+</div>
+
+<div class="post-zan">
+			<a href="alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=https%3A%2F%2Fqr.alipay.com%2FFKX0851484LFW1ZXQOUM37%3F_s%3Dweb-other">👍 文章对我有帮助，打赏1元 👍</a>
+</div>
+
+<!-- <div class="related">
+    
+    <h2>《<a class="meta-category" href="/categories/iOS/index.html">iOS</a>》Related Posts</h2>
+    <ul class="related-posts">
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/21/use-cocoapods-manager-frameworks/">
+                使用 CocoaPods 管理 frameworks
+                <small>21 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/20/create-pod-library/">
+                创建 CocoaPods 库
+                <small>20 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/19/install-cocoapods/">
+                安装 CocoaPods
+                <small>19 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/2017/07/18/objc-weak-obj-imp/">
+                源码分析 weak 对象自动置空原理
+                <small>18 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+      
+      </ul>
+    
+</div> -->
+
+<div class="related">
+  <h2> 相关文章 </h2>
+  <ol class="related-posts">
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/cocoapods/2017/07/21/use-cocoapods-manager-frameworks/">
+              使用 CocoaPods 管理 frameworks
+              <small>21 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/cocoapods/2017/07/20/create-pod-library/">
+              创建 CocoaPods 库
+              <small>20 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/cocoapods/2017/07/19/install-cocoapods/">
+              安装 CocoaPods
+              <small>19 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/2017/07/18/objc-weak-obj-imp/">
+              源码分析 weak 对象自动置空原理
+              <small>18 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/2015/07/14/jie-jue-nstimeryin-qi-de-nei-cun-xie-lou/">
+              解决 NSTimer 内存泄漏问题
+              <small>14 Jul 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/script/2015/07/07/bo-ke-an-jia-la/">
+              Hello My Blog
+              <small>07 Jul 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/2014/01/02/introducing-lanyon/">
+              Introducing Lanyon
+              <small>02 Jan 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/2014/01/01/example-content/">
+              Example content
+              <small>01 Jan 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+  </ol>
+</div>
+
+<!-- 评论 -->
+<div class="comment">
+  <h2> 评论 </h2>
+	<div class="comment-body">
+		<div id="SOHUCS" sid=/ios/2017/07/17/weakself-in-dealloc-cause-crash></div>
+<script charset="utf-8" type="text/javascript" src="http://changyan.sohu.com/upload/changyan.js" ></script>
+<script type="text/javascript">
+window.changyan.api.config({
+appid: 'cysIuT5kR',
+conf: 'prod_fd7df0395aed8f2cdaa12c462f602912'
+});
+</script>
+
+	</div>
+</div>
+
+<script>
+function is_mobile_browser() {
+    var sUserAgent = navigator.userAgent.toLowerCase();
+    var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";
+    var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";
+    var bIsMidp = sUserAgent.match(/midp/i) == "midp";
+    var bIsUc7 = sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4";
+    var bIsUc = sUserAgent.match(/ucweb/i) == "ucweb";
+    var bIsAndroid = sUserAgent.match(/android/i) == "android";
+    var bIsCE = sUserAgent.match(/windows ce/i) == "windows ce";
+    var bIsWM = sUserAgent.match(/windows mobile/i) == "windows mobile";
+
+    if (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM) {
+        var e = document.getElementById('post-zan');
+        e.style.display="block";
+    }
+}
+
+is_mobile_browser();
+</script>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <div class="common-footer">
+	<span>
+		Copyright © <a href="https://github.com/debugly" target="_blank">Debugly </a>2017.
+		Build with <a href="https://jekyllrb.com" target="_blank">Jekyll</a>.
+		Hosted on <a href="https://pages.github.com/" target="_blank">GitHub</a>.
+	</span>
+</div>
+
+    
+    <script>
+      (function(document) {
+        var toggle = document.querySelector('.sidebar-toggle');
+        var sidebar = document.querySelector('#sidebar');
+        var checkbox = document.querySelector('#sidebar-checkbox');
+
+        document.addEventListener('click', function(e) {
+          var target = e.target;
+
+          if(!checkbox.checked ||
+             sidebar.contains(target) ||
+             (target === checkbox || target === toggle)) return;
+
+          checkbox.checked = false;
+        }, false);
+      })(document);
+    </script>
+  </body>
+</html>

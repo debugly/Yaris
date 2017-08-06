@@ -1,0 +1,21 @@
+# Permalinks
+#
+# Use of `relative_permalinks` ensures post links from the index work properly.
+permalink:           pretty
+# relative_permalinks: false #3.0 不再支持
+
+# Setup
+title:               Matt Reach
+tagline:             'an iOS Developer'
+github_username:     debugly
+description:         '<p>滚滚东逝水，淘尽英雄泪。</p><p>青山依旧在，几度夕阳红。 </p><p>古今多少事，都付笑谈中。</p>'
+url:                 http://debugly.cn
+paginate:            6
+# About/contact
+author:
+  name:              许乾隆
+  url:               https://twitter.com/mdo
+  email:             qianlongxu@gmail.com
+
+# Custom vars
+version:             1.0.0

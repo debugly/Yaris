@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      使用 CocoaPods 管理 frameworks &middot; Matt Reach
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <img src="/assets/images/icon_about.png"/>
+    <p><p>滚滚东逝水，淘尽英雄泪。</p><p>青山依旧在，几度夕阳红。 </p><p>古今多少事，都付笑谈中。</p></p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="/">首页</a>
+    <a class="sidebar-nav-item" href="/categories/">分类</a>
+    <a class="sidebar-nav-item" href="/qianfansdk">轮子</a>
+    <a class="sidebar-nav-item" href="/about/">关于</a>
+  </nav>
+
+</div>
+
+
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="/" title="Home">Matt Reach</a>
+            <small>an iOS Developer</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+        <div class="post">
+
+  <div class="post-header">
+    <h1 class="post-title">使用 CocoaPods 管理 frameworks</h1>
+    <div class="post-date">
+      <span class="post-meta">21 Jul 2017</span>
+      
+      	<span> · </span>
+      	<a href="/categories/iOS/index.html">iOS</a>
+    	
+      	<span> · </span>
+      	<a href="/categories/CocoaPods/index.html">CocoaPods</a>
+    	
+    	<span> · </span>
+    	<span class="post-meta"> 3853 字</span>
+    </div>
+  </div>
+
+  <div class="post-content">
+    <blockquote>
+  <p>上篇博客介绍了如何创建 pods 库，让 pods 库帮我们管理源码、依赖、编译成库、配置search path等工作；但有时候你可能不想或者不能把源码提供出去，还想要使用 pods 管理版本的话，就可以让 pods 直接管理 frameworks 而不是源码！</p>
+</blockquote>
+
+<p>我已经实践了过了，确实可以管理 framework 的，这是创建好的包含 demo 的 pods 库地址 ：<a href="https://github.com/debugly/TestSCFPods">https://github.com/debugly/TestSCFPods</a>。</p>
+
+<p>创建步骤和创建管理源码的 pods 库是一样的，只不过 podspec 里的配置不太一样而已！如果你没有创建过 pods 库的话，最好先去看下上篇博客 : <a href="/ios/2017/07/20/create-pod-library.html#0">创建 CocoaPods 库</a>。</p>
+
+<h1 id="创建-git-仓库">创建 git 仓库</h1>
+
+<p>同样的，我们需要先创建一个 git 仓库，用于管理 frameworks 的版本，并且打 tag。然后克隆到本地，进入仓库目录 :</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>cd ~/GitWorkspace/TestSCFPods
+</code></pre>
+</div>
+
+<h1 id="创建-podspec-文件">创建 podspec 文件</h1>
+
+<p>进入仓库目录后，开始创建 podspec 文件</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>pod spec create TestSCFPods
+
+Specification created at TestSCFPods.podspec
+</code></pre>
+</div>
+
+<p>我把和创建普通源码 pods 库不一样的地方拿出来说下：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>//上篇博客里没用到，因此没提；这个是资源路径，我的 SohuGameSDK.framework 里包含的有 SohuGame.xcassets 这个图片库；
+s.resources = "SohuGameSDK.framework/SohuGame.xcassets"
+///这个很重要，把需要管理的 frameworks 都写出来，如果有依赖关系，最好被依赖的写在前面
+s.vendored_frameworks = "SohuCoreFoundation.framework","SohuGameSDK.framework"
+///不需要额外暴露头文件
+# s.source_files  = "**/*.{h}"
+</code></pre>
+</div>
+
+<h1 id="验证-podspec-文件">验证 podspec 文件</h1>
+
+<p>同样的，使用 <code class="highlighter-rouge">pod spec lint --allow-warnings</code> 验证下，通过如下：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>-&gt; TestSCFPods (1.0.0)
+
+Analyzed 1 podspec.
+
+TestSCFPods.podspec passed validation.
+</code></pre>
+</div>
+
+<p>有错误的话，就使用 <code class="highlighter-rouge">pod spec lint --allow-warnings --verbose</code> 再次验证，不过会打印详细的日志，通过日志去找问题！</p>
+
+<h1 id="提交-podspec-文件">提交 podspec 文件</h1>
+
+<p>如果没有账户的话，那就注册一个；注册过了就 push 吧：</p>
+
+<p><code class="highlighter-rouge">pod trunk push TestSCFPods.podspec --allow-warnings</code></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Updating spec repo `master`
+
+CocoaPods 1.3.0.beta.3 is available.
+To update use: `sudo gem install cocoapods --pre`
+[!] This is a test version we'd love you to try.
+
+For more information, see https://blog.cocoapods.org and the CHANGELOG for this version at https://github.com/CocoaPods/CocoaPods/releases/tag/1.3.0.beta.3
+
+Validating podspec
+ -&gt; TestSCFPods (1.0.0)
+
+Updating spec repo `master`
+
+CocoaPods 1.3.0.beta.3 is available.
+To update use: `sudo gem install cocoapods --pre`
+[!] This is a test version we'd love you to try.
+
+For more information, see https://blog.cocoapods.org and the CHANGELOG for this version at https://github.com/CocoaPods/CocoaPods/releases/tag/1.3.0.beta.3
+
+
+--------------------------------------------------------------------------------
+ 🎉  Congrats
+
+ 🚀  TestSCFPods (1.0.0) successfully published
+ 📅  July 20th, 07:25
+ 🌎  https://cocoapods.org/pods/TestSCFPods
+ 👍  Tell your friends!
+--------------------------------------------------------------------------------
+</code></pre>
+</div>
+
+<p>恭喜你，成功了，接下来就可以创建个 demo 试下了！</p>
+
+<p>不仅能管理 frameworks ，还可以管理 .a 静态库，区别是 <strong>s.vendored_frameworks</strong> 改为 <strong>s.vendored_libraries</strong> !</p>
+
+<p>我觉得很赞的是，不用将资源手动添加到主工程里去，pods会自动通过脚本帮你完成这件事，这个是新版 pods 才有的功能，最初是不支持的，大概是从 1.0 开始支持的！！</p>
+
+<h1 id="实际效果">实际效果</h1>
+
+<p>使用 pods 的最初原因是为了，集成我 SDK 的开发人员能够简单高效的换包，从实际使用的效率上来看，其实没有那么理想，我举个栗子，比如我 SDK 要更新发包了：</p>
+
+<p>我的工作是:</p>
+
+<ol>
+  <li>将 SDK（也就是相关的 frameworks）上传到 github</li>
+  <li>升级一个 tag 号</li>
+  <li>升级 podspec 版本号</li>
+  <li>将 podspec 推送到 cocospods</li>
+</ol>
+
+<p>集成者的工作是:</p>
+
+<ol>
+  <li>升级 Podfile 的版本号</li>
+  <li>使用 pod update 把库更新下来</li>
+  <li>提交更新后的代码</li>
+</ol>
+
+<p>总体看来，SDK更新一个版本一共需要 7 个步骤，我感觉是略繁琐了些，所以我并没有采用 pods 管理 frameworks 来自动换包这个方案！</p>
+
+<p>还有个弊端是，如果 Podfile 里没有指定小版本号，那么可能集成App依赖的其他库也被更新了，或许App开发并不想更新其他依赖库！</p>
+
+
+  </div>
+
+  <div class="modify">
+  	最后一次修改时间 : 17年08月02日.
+  </div>
+
+</div>
+
+<div class="nav-meta">
+	
+	<a class="previous" href="/ios/cocoapods/2017/07/20/create-pod-library/"> << 创建 CocoaPods 库 </a>
+	
+
+	
+</div>
+
+<div class="post-zan">
+			<a href="alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=https%3A%2F%2Fqr.alipay.com%2FFKX0851484LFW1ZXQOUM37%3F_s%3Dweb-other">👍 文章对我有帮助，打赏1元 👍</a>
+</div>
+
+<!-- <div class="related">
+    
+    <h2>《<a class="meta-category" href="/categories/iOS/index.html">iOS</a>》Related Posts</h2>
+    <ul class="related-posts">
+      
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/20/create-pod-library/">
+                创建 CocoaPods 库
+                <small>20 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/19/install-cocoapods/">
+                安装 CocoaPods
+                <small>19 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/2017/07/18/objc-weak-obj-imp/">
+                源码分析 weak 对象自动置空原理
+                <small>18 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/2017/07/17/weakself-in-dealloc-cause-crash/">
+                在 dealloc 里使用 weak self 引起崩溃？
+                <small>17 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+      </ul>
+    
+    <h2>《<a class="meta-category" href="/categories/CocoaPods/index.html">CocoaPods</a>》Related Posts</h2>
+    <ul class="related-posts">
+      
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/20/create-pod-library/">
+                创建 CocoaPods 库
+                <small>20 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+        
+          <li>
+            <h3>
+              <a href="/ios/cocoapods/2017/07/19/install-cocoapods/">
+                安装 CocoaPods
+                <small>19 Jul 2017</small>
+              </a>
+            </h3>
+          </li>
+        
+      
+      </ul>
+    
+</div> -->
+
+<div class="related">
+  <h2> 相关文章 </h2>
+  <ol class="related-posts">
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/cocoapods/2017/07/20/create-pod-library/">
+              创建 CocoaPods 库
+              <small>20 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/cocoapods/2017/07/19/install-cocoapods/">
+              安装 CocoaPods
+              <small>19 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/2017/07/18/objc-weak-obj-imp/">
+              源码分析 weak 对象自动置空原理
+              <small>18 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/2017/07/17/weakself-in-dealloc-cause-crash/">
+              在 dealloc 里使用 weak self 引起崩溃？
+              <small>17 Jul 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/ios/2015/07/14/jie-jue-nstimeryin-qi-de-nei-cun-xie-lou/">
+              解决 NSTimer 内存泄漏问题
+              <small>14 Jul 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/script/2015/07/07/bo-ke-an-jia-la/">
+              Hello My Blog
+              <small>07 Jul 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/2014/01/02/introducing-lanyon/">
+              Introducing Lanyon
+              <small>02 Jan 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+      
+        <li>
+          <h3>
+            <a href="/2014/01/01/example-content/">
+              Example content
+              <small>01 Jan 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    
+  </ol>
+</div>
+
+<!-- 评论 -->
+<div class="comment">
+  <h2> 评论 </h2>
+	<div class="comment-body">
+		<div id="SOHUCS" sid=/ios/cocoapods/2017/07/21/use-cocoapods-manager-frameworks></div>
+<script charset="utf-8" type="text/javascript" src="http://changyan.sohu.com/upload/changyan.js" ></script>
+<script type="text/javascript">
+window.changyan.api.config({
+appid: 'cysIuT5kR',
+conf: 'prod_fd7df0395aed8f2cdaa12c462f602912'
+});
+</script>
+
+	</div>
+</div>
+
+<script>
+function is_mobile_browser() {
+    var sUserAgent = navigator.userAgent.toLowerCase();
+    var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";
+    var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";
+    var bIsMidp = sUserAgent.match(/midp/i) == "midp";
+    var bIsUc7 = sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4";
+    var bIsUc = sUserAgent.match(/ucweb/i) == "ucweb";
+    var bIsAndroid = sUserAgent.match(/android/i) == "android";
+    var bIsCE = sUserAgent.match(/windows ce/i) == "windows ce";
+    var bIsWM = sUserAgent.match(/windows mobile/i) == "windows mobile";
+
+    if (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM) {
+        var e = document.getElementById('post-zan');
+        e.style.display="block";
+    }
+}
+
+is_mobile_browser();
+</script>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <div class="common-footer">
+	<span>
+		Copyright © <a href="https://github.com/debugly" target="_blank">Debugly </a>2017.
+		Build with <a href="https://jekyllrb.com" target="_blank">Jekyll</a>.
+		Hosted on <a href="https://pages.github.com/" target="_blank">GitHub</a>.
+	</span>
+</div>
+
+    
+    <script>
+      (function(document) {
+        var toggle = document.querySelector('.sidebar-toggle');
+        var sidebar = document.querySelector('#sidebar');
+        var checkbox = document.querySelector('#sidebar-checkbox');
+
+        document.addEventListener('click', function(e) {
+          var target = e.target;
+
+          if(!checkbox.checked ||
+             sidebar.contains(target) ||
+             (target === checkbox || target === toggle)) return;
+
+          checkbox.checked = false;
+        }, false);
+      })(document);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+---
+layout: default
+title: Home
+---
+
+<!-- 列举最近发表的几篇文章 -->
+
+<ul class="home-posts">
+    {% for post in paginator.posts %}
+      <li class="home-post">
+        <div class="home-post-title">
+          <h1>
+            <a href="{{ post.url }}"> {{ post.title }} </a>
+          </h1>
+        </div>
+
+        <div class="home-post-excerpt">
+          {% if post.excerpt %}{{ post.excerpt | strip_html | strip_newlines | truncate: 120 }}{% endif %}
+        </div>
+
+        <div class="home-post-date">
+          {{ post.date | date_to_string }}
+        </div>
+
+        <div class="home-post-read">
+          <a href="{{ post.url }}#0"> 继续阅读 >> </a>
+        </div>
+      </li>
+    {% endfor %}
+</ul>
+
+<div class="pagination">
+  {% if paginator.previous_page %}
+    {% if paginator.page == 2 %}
+      <a class="pagination-item newer" href="/">第{{paginator.previous_page}}页</a>
+    {% else %}
+      <a class="pagination-item newer" href="/page{{paginator.previous_page}}">第{{paginator.previous_page}}页</a>
+    {% endif %}
+  {% else %}
+    <span class="pagination-item newer">没有最新啦</span>
+  {% endif %}
+
+
+  {% if paginator.next_page %}
+    <a class="pagination-item older" href="/page{{paginator.next_page}}">第{{paginator.next_page}}页</a>
+  {% else %}
+    <span class="pagination-item older">没有更多</span>
+  {% endif %}
+</div>
