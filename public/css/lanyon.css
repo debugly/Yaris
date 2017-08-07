@@ -693,5 +693,5 @@ a.pagination-item:hover {
 	text-align: center;
   border: 1px solid #ddd;
   margin-bottom: 30px;
-	/*display: none;*/
+	display: none;
 }
