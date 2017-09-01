@@ -353,6 +353,7 @@ a.sidebar-nav-item:focus {
 /*首页post*/
 .home-posts{
   list-style: none;
+  padding-left: 0px;
 }
 
 .home-post{
